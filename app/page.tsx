@@ -7,20 +7,21 @@ interface FormData {
 }
 
 const App: React.FC = () => {
-  const [textFieldValue, setTextFieldValue] = useState<string>('');
+  const [textInputValue, setTextInputValue] = useState<string>('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setTextFieldValue(e.target.value);
+    setTextInputValue(e.target.value);
   };
 
-  const handleSubmit = async () => {
-    if (textFieldValue.trim() === '') {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // Prevent default form submission
+    if (textInputValue.trim() === '') {
       alert('Please enter some text before submitting.');
       return;
     }
 
     try {
-      const responseData = await submitFormToApi({ textField: textFieldValue });
+      const responseData = await submitFormToApi({ textField: textInputValue });
       // Handle success
       console.log('Form submitted successfully:', responseData);
     } catch (error) {
@@ -48,21 +49,48 @@ const App: React.FC = () => {
   };
 
   return (
-      <div>
-        <form>
-          <label htmlFor="textField">Enter Text:</label>
-          <input
-              type="text"
-              id="textField"
-              name="textField"
-              value={textFieldValue}
-              onChange={handleInputChange}
-              required
-          />
-          <button type="button" onClick={handleSubmit}>
-            Submit
-          </button>
-        </form>
+      <div className="container max-w-6xl border border-stone-200 bg-white font-mono">
+          <div className="flex flex-row flex-wrap">
+            <div className="basis-full text-center">
+              <h1 className="mt-8 mb-4 text-4xl font-mono">backtalk.dev</h1>
+            </div>
+          </div>
+        <hr className="mx-8"></hr>
+        <div className="py-8">
+          <form onSubmit={handleSubmit}>
+            <div className="flex flex-row flex-wrap justify-center">
+              <div className="basis-1/2 text-center">
+                <label htmlFor="textField">Enter Text:</label>
+                <input
+                    type="text"
+                    id="textInput"
+                    name="textInput"
+                    value={textInputValue}
+                    onChange={handleInputChange}
+                    required
+                    className="rounded border border-stone-200"
+                />
+              </div>
+              <div className="basis-1/2 text-center">
+                <label htmlFor="textField">Output:</label>
+                <input
+                    type="text"
+                    id="textOutput"
+                    name="textOutput"
+                    // value={textOutputValue}
+                    // onChange={handleInputChange}
+                    // required
+                    className="rounded border border-stone-200"
+                />
+              </div>
+            </div>
+            <div className="flex flex-row flex-wrap justify-center">
+              <button type="submit" className="basis-1/12 rounded border border-stone-200">
+                Submit
+              </button>
+            </div>
+          </form>
+      </div>
       </div>
   );
 };
