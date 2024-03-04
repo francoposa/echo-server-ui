@@ -60,7 +60,10 @@ const App: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-row flex-wrap justify-center">
               <div className="basis-1/2 text-center">
-                <label htmlFor="textField">Enter Text:</label>
+                <div className="basis-full">
+                  <label htmlFor="textField">Enter Text:</label>
+                </div>
+                <div className="basis-full">
                 <input
                     type="text"
                     id="textInput"
@@ -68,11 +71,15 @@ const App: React.FC = () => {
                     value={textInputValue}
                     onChange={handleInputChange}
                     required
-                    className="rounded border border-stone-200"
+                    className="basis-full rounded border border-stone-200"
                 />
+                </div>
               </div>
               <div className="basis-1/2 text-center">
+                <div className="basis-full">
                 <label htmlFor="textField">Output:</label>
+                </div>
+                <div className="basis-full">
                 <input
                     type="text"
                     id="textOutput"
@@ -82,15 +89,20 @@ const App: React.FC = () => {
                     // required
                     className="rounded border border-stone-200"
                 />
+                </div>
               </div>
             </div>
-            <div className="flex flex-row flex-wrap justify-center">
-              <button type="submit" className="basis-1/12 rounded border border-stone-200">
-                Submit
+            <div className="flex flex-row flex-wrap justify-center my-8">
+              <button type="submit" className="lg:basis-1/6 basis-1/2 rounded border border-stone-200">
+                Submit Raw
+              </button>
+              <div className="lg:basis-1/12 basis-full my-2"></div>
+              <button type="submit" className="lg:basis-1/6 basis-1/2 rounded border border-stone-200">
+                Submit JSON
               </button>
             </div>
           </form>
-      </div>
+        </div>
       </div>
   );
 };
