@@ -1,24 +1,21 @@
 'use client';
 
 import React, { useState } from 'react';
+import FixedTextArea from "@/components/FixedTextArea";
 
 interface FormData {
   textField: string;
 }
 
 const App: React.FC = () => {
-  const [textInputValue, setTextInputValue] = useState<string>('');
+  const [textInputValue, setTextInputValue] = useState('');
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTextInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTextInputValue(e.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // Prevent default form submission
-    if (textInputValue.trim() === '') {
-      alert('Please enter some text before submitting.');
-      return;
-    }
+    e.preventDefault();
 
     try {
       const responseData = await submitFormToApi({ textField: textInputValue });
@@ -60,34 +57,31 @@ const App: React.FC = () => {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-row flex-wrap justify-center">
               <div className="basis-1/2 text-center">
-                <div className="basis-full">
+                <div className="lg:basis-1/2 basis-full">
                   <label htmlFor="textField">Enter Text:</label>
                 </div>
-                <div className="basis-full">
-                <input
-                    type="text"
-                    id="textInput"
-                    name="textInput"
-                    value={textInputValue}
-                    onChange={handleInputChange}
-                    required
-                    className="basis-full rounded border border-stone-200"
-                />
+                <div className="lg:basis-1/2 basis-full">
+                  <FixedTextArea
+                      rows={16}
+                      cols={40}
+                      value={textInputValue}
+                      onChange={handleTextInputChange}
+                  />
                 </div>
               </div>
               <div className="basis-1/2 text-center">
-                <div className="basis-full">
-                <label htmlFor="textField">Output:</label>
+                <div className="lg:basis-1/2 basis-full">
+                  <label htmlFor="textField">Output:</label>
                 </div>
-                <div className="basis-full">
-                <input
-                    type="text"
-                    id="textOutput"
+                <div className="lg:basis-1/2 basis-full">
+                  <textarea
+                      // type="text"
+                      id="textOutput"
                     name="textOutput"
                     // value={textOutputValue}
                     // onChange={handleInputChange}
                     // required
-                    className="rounded border border-stone-200"
+                      className="w-3/4 h-72 rounded border border-stone-200"
                 />
                 </div>
               </div>
