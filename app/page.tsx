@@ -1,57 +1,75 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import FixedTextArea from "@/components/FixedTextArea";
 
 const apiURL: string = process.env.NEXT_PUBLIC_ECHO_SERVER_API_BASE_URL || "http://localhost";
+let apiURLEchoRawRoute = apiURL;
+let apiURLEchoJSONRoute = apiURL + "/json";
 const submitTypeRaw = 'raw';
 const submitTypeJSON = 'json';
 
-const App: React.FC = () => {
-  const [textInputValue, setTextInputValue] = useState('');
-  const [textOutputValue, setTextOutputValue] = useState('');
+const messagePrefixSuccess = 'Success!';
+const messagePrefixError = 'Error from server:';
 
+const App: React.FC = () => {
+  const [message, setMessage] = useState('');
+  const dismissMessage = () => {
+    setMessage('');
+  };
+
+  const [textInputValue, setTextInputValue] = useState('');
   const handleTextInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setTextInputValue(e.target.value);
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>, submitType: string) => {
+  const [textOutputValue, setTextOutputValue] = useState('');
+
+  const handleSubmitForm = async (e: React.FormEvent<HTMLFormElement>, submitType: string) => {
     e.preventDefault();
 
     try {
-      let url = apiURL;
-      if (submitType === submitTypeJSON) {
-        url += '/json';
-      }
-      console.log(url);
+      let url: string =  submitType === submitTypeJSON ? apiURLEchoJSONRoute: apiURLEchoRawRoute;
 
-      const responseData = await submitFormToApi({ textInputValue: textInputValue }, url);
-      if (submitType === submitTypeJSON) {
-        setTextOutputValue(JSON.stringify(responseData));
-      } else {
-        setTextOutputValue(responseData);
-      }
+      const resp: Response = await submitFormToApi({ textInputValue: textInputValue }, url);
+      const respBody = await extractResponseBody(resp, submitType);
+      const respMessage = makeMessage(resp);
 
-    } catch (error) {
-      console.error('Error submitting form:', error);
+      setMessage(respMessage);
+      setTextOutputValue(respBody);
+
+    } catch (err) {
+      setMessage(`Error submitting form: ${err}`);
     }
   };
 
-  const submitFormToApi = async (requestData: { textInputValue: string; }, apiUrl: string): Promise<any> => {
-    const response = await fetch(apiUrl, {
+  const submitFormToApi = async (requestData: { textInputValue: string; }, apiUrl: string): Promise<Response> => {
+    return await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(requestData.textInputValue)
     });
+  };
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
+  async function extractResponseBody(resp: Response, submitType: string) {
+    let respBody = '';
+
+    if (resp.status < 400) {
+      respBody = await resp.json();
+      if (submitType === submitTypeJSON) {
+        respBody = JSON.stringify(respBody);
+      }
     }
 
-    return response.json();
-  };
+    return respBody;
+  }
+
+  const makeMessage = (resp: Response): string => {
+    let messagePrefix = (resp.status < 400) ?  messagePrefixSuccess : messagePrefixError;
+    return `${messagePrefix} ${resp.status} ${resp.statusText}`
+  }
 
   return (
       <div className="container max-w-6xl border border-stone-200 bg-white font-mono">
@@ -61,52 +79,69 @@ const App: React.FC = () => {
           </div>
         </div>
         <hr className="mx-8"></hr>
+
         <div className="py-8">
-          <form onSubmit={(e) => handleSubmit(e, submitTypeRaw)}>
-            <div className="flex flex-row flex-wrap justify-center">
-              <div className="basis-1/2 text-center">
-                <div className="lg:basis-1/2 basis-full">
-                  <label htmlFor="textInput">Enter Text:</label>
-                </div>
-                <div className="lg:basis-1/2 basis-full">
-                  <FixedTextArea
-                      id="textInput"
-                      rows={16}
-                      cols={40}
-                      value={textInputValue}
-                      onChange={handleTextInputChange}
-                  />
-                </div>
+          <div className="flex flex-row flex-wrap justify-center text-center">
+            <div className="lg:basis-1/2 basis-full">
+              <div className="lg:basis-1/2 basis-full">
+                <label htmlFor="textInput">Enter Text:</label>
               </div>
-              <div className="basis-1/2 text-center">
-                <div className="lg:basis-1/2 basis-full">
-                  <label htmlFor="textOutput">Output:</label>
-                </div>
-                <div className="lg:basis-1/2 basis-full">
-                  <FixedTextArea
-                      id="textOutput"
-                      rows={16}
-                      cols={40}
-                      value={textOutputValue}
-                      onChange={null}
-                      readOnly={true}
-                  />
-                </div>
+              <div className="lg:basis-1/2 basis-full">
+                <FixedTextArea
+                    id="textInput"
+                    rows={16}
+                    cols={40}
+                    value={textInputValue}
+                    onChange={handleTextInputChange}
+                />
               </div>
             </div>
+            <div className="lg:basis-1/2 basis-full">
+              <div className="lg:basis-1/2 basis-full">
+                <label htmlFor="textOutput">Output:</label>
+              </div>
+              <div className="lg:basis-1/2 basis-full">
+                <FixedTextArea
+                    id="textOutput"
+                    rows={16}
+                    cols={40}
+                    value={textOutputValue}
+                    onChange={null}
+                    readOnly={true}
+                />
+              </div>
+            </div>
+          </div>
+
+          {message && (
+              <div className="flex flex-row flex-wrap my-4 items-center justify-center text-center">
+                <div id="message" className="lg:basis-1/2 basis-5/6 rounded bg-stone-100">
+                  <div className="flex flex-row flex-wrap items-center justify-center text-center my-2">
+                    <div id="message" className="lg:basis-5/6 basis-5/6 py-1">
+                      {message}
+                    </div>
+                    <div className="lg:basis-1/12 basis-full text-xl">
+                      <button  onClick={dismissMessage} >
+                        &times;
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          )}
+
+        <form onSubmit={(e) => handleSubmitForm(e, submitTypeRaw)}>
             <div className="flex flex-row flex-wrap justify-center my-8">
               <button type="submit" id="submitRaw" className="lg:basis-1/6 basis-1/2 rounded border border-stone-200">
                 Submit Raw
               </button>
-              <div className="lg:basis-1/12 basis-full my-2"></div>
             </div>
           </form>
-          <form onSubmit={(e) => handleSubmit(e, submitTypeJSON)}>
+          <form onSubmit={(e) => handleSubmitForm(e, submitTypeJSON)}>
             <div className="flex flex-row flex-wrap justify-center my-8">
               <button type="submit" id="submitJSON" className="lg:basis-1/6 basis-1/2 rounded border border-stone-200">
                 Submit JSON
               </button>
-              <div className="lg:basis-1/12 basis-full my-2"></div>
             </div>
           </form>
         </div>
