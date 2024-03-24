@@ -82,11 +82,12 @@ const App: React.FC = () => {
 
         <div className="py-8">
           <div className="flex flex-row flex-wrap justify-center text-center">
+
             <div className="lg:basis-1/2 basis-full">
-              <div className="lg:basis-1/2 basis-full">
+              <div className="lg:basis-1/2 basis-full lg:mb-2">
                 <label htmlFor="textInput">Enter Text:</label>
               </div>
-              <div className="lg:basis-1/2 basis-full">
+              <div className="lg:basis-1/2 basis-full lg:ml-4">
                 <FixedTextArea
                     id="textInput"
                     rows={16}
@@ -96,11 +97,12 @@ const App: React.FC = () => {
                 />
               </div>
             </div>
+
             <div className="lg:basis-1/2 basis-full">
-              <div className="lg:basis-1/2 basis-full">
+              <div className="lg:basis-1/2 basis-full lg:mb-2">
                 <label htmlFor="textOutput">Output:</label>
               </div>
-              <div className="lg:basis-1/2 basis-full">
+              <div className="lg:basis-1/2 basis-full lg:mr-4">
                 <FixedTextArea
                     id="textOutput"
                     rows={16}
