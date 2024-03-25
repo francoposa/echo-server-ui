@@ -1,52 +1,65 @@
-FROM node:18-alpine AS base
-# 1. Install dependencies only when needed
-FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
+FROM node:21-bookworm AS base
 
-WORKDIR /app
-
-# Install dependencies based on the preferred package manager
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
-
-
-# 2. Rebuild the source code only when needed
+# Step 1. Rebuild the source code only when needed
 FROM base AS builder
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY . .
-# This will do the trick, use the corresponding env file for each environment.
-#COPY .env.production.sample .env.production
+
+WORKDIR /echo-server-ui
+
+COPY package.json package-lock.json* ./
+
+RUN npm ci
+
+COPY app ./app
+COPY components ./components
+COPY public ./public
+
+COPY next.config.mjs .
+COPY next-env.d.ts .
+
+COPY postcss.config.js .
+COPY tailwind.config.ts .
+COPY tsconfig.json .
+
+# Environment variables must be present at build time
+# https://github.com/vercel/next.js/discussions/14030
+ARG NEXT_PUBLIC_ECHO_SERVER_API_BASE_URL
+ENV NEXT_PUBLIC_ECHO_SERVER_API_BASE_URL=${NEXT_PUBLIC_ECHO_SERVER_API_BASE_URL}
+
+# Next.js collects completely anonymous telemetry data about general usage.
+# Learn more here: https://nextjs.org/telemetry
+# Uncomment the following line to disable telemetry at build time
+ENV NEXT_TELEMETRY_DISABLED 1
+
 RUN npm run build
 
-# 3. Production image, copy all the files and run next
+# Note: It is not necessary to add an intermediate step that does a full copy of `node_modules` here
+
+# Step 2. Production image, copy all the files and run next
 FROM base AS runner
+
 WORKDIR /app
+
+# Don't run production as root
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+USER nextjs
 
 ENV NODE_ENV=production
 
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
-
-COPY --from=builder /app/public ./public
+COPY --from=builder /echo-server-ui/public ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /echo-server-ui/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /echo-server-ui/.next/static ./.next/static
 
+# Environment variables must be redefined at run time
+ARG NEXT_PUBLIC_ECHO_SERVER_API_BASE_URL
+ENV NEXT_PUBLIC_ECHO_SERVER_API_BASE_URL=${NEXT_PUBLIC_ECHO_SERVER_API_BASE_URL}
 
-USER nextjs
-
-EXPOSE 3000
+# Uncomment the following line to disable telemetry at run time
+ENV NEXT_TELEMETRY_DISABLED 1
 
 ENV PORT 3000
 ENV HOSTNAME 0.0.0.0
-
 CMD ["node", "server.js"]
