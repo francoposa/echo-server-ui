@@ -3,9 +3,9 @@
 import React, {useState} from 'react';
 import FixedTextArea from "@/components/FixedTextArea";
 
-const apiURL: string = process.env.NEXT_PUBLIC_ECHO_SERVER_API_BASE_URL || "http://localhost";
-let apiURLEchoRawRoute = apiURL;
-let apiURLEchoJSONRoute = apiURL + "/json";
+const apiURL: string = process.env.NEXT_PUBLIC_ECHO_SERVER_API_BASE_URL || "http://localhost:8080/api/v0";
+let apiURLEchoRawRoute = apiURL + "/echo";
+let apiURLEchoJSONRoute = apiURL + "/echo/json";
 const submitTypeRaw = 'raw';
 const submitTypeJSON = 'json';
 
